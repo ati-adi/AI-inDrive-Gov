@@ -41,7 +41,6 @@ Excel из ГИСС → Pipeline (XGBoost + правила + аномалии) �
 
 - **ML**: XGBoost, Isolation Forest, DBSCAN, scikit-learn, SHAP
 - **Backend**: Python, FastAPI, SQLAlchemy (PostgreSQL/SQLite)
-- **AI**: K2Think API (MBZUAI-IFM/K2-Think-v2) — объяснения на русском
 - **Frontend**: HTML/CSS/JS (single page, dark theme)
 
 ## Установка и запуск
