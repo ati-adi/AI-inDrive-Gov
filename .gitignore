@@ -1,0 +1,32 @@
+# Data
+data/raw/*.xlsx
+data/raw/*.xls
+data/processed/*.csv
+data/processed/*.parquet
+data/processed/*.json
+data/*.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+venv/
+.venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models
+*.joblib
+*.pkl
+*.model

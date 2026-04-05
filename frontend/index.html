@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SubsidyAI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0c0f;--bg2:#141418;--bg3:#1c1c22;--bg4:#25252d;--text:#e8e6e1;--text2:#9d9b95;--text3:#5e5d58;--border:#2a2a32;--approve:#22c55e;--approve-bg:#052e16;--reject:#ef4444;--reject-bg:#300a0a;--accent:#6366f1;--accent-bg:#1e1b4b;--warm:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+.nav{background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.nav-in{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;height:52px;gap:20px}
+.logo{font-weight:700;font-size:16px;letter-spacing:-.5px}.logo span{color:var(--accent)}
+.nav-tabs{display:flex;gap:2px;margin-left:20px}
+.nav-tab{padding:6px 14px;font-size:13px;font-weight:500;color:var(--text3);border-radius:6px;cursor:pointer;border:none;background:none;font-family:inherit;transition:all .15s}
+.nav-tab:hover{color:var(--text2)}.nav-tab.on{color:var(--text);background:var(--bg4)}
+.nav-st{margin-left:auto;font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.nav-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--approve);margin-right:5px}
+
+/* Screens */
+.screen{display:none;animation:fadeIn .3s ease}
+.screen.on{display:block}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ===== UPLOAD SCREEN ===== */
+.upload-screen{max-width:520px;margin:100px auto;padding:24px;text-align:center}
+.upload-screen h1{font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
+.upload-screen h1 span{color:var(--accent)}
+.upload-screen p{font-size:14px;color:var(--text2);margin-bottom:32px}
+.drop{border:2px dashed var(--border);border-radius:14px;padding:56px 32px;background:var(--bg2);cursor:pointer;transition:border .2s}
+.drop:hover{border-color:var(--accent)}.drop input{display:none}
+.drop-icon{font-size:36px;margin-bottom:10px}
+.drop-main{font-size:15px;font-weight:500}
+.drop-sub{font-size:13px;color:var(--text3);margin-top:4px}
+.upload-progress{margin-top:24px;display:none}
+.upload-progress.on{display:block}
+.prog-bar{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:10px}
+.prog-fill{height:100%;background:var(--accent);border-radius:2px;width:0;transition:width .3s}
+.prog-text{font-size:13px;color:var(--text2)}
+
+/* ===== DASHBOARD ===== */
+.dash{max-width:1100px;margin:0 auto;padding:24px}
+.dash-top{display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.dash-top h2{font-size:20px;font-weight:600}
+.counter{font-size:13px;color:var(--text2);background:var(--bg3);padding:6px 14px;border-radius:8px;font-family:'JetBrains Mono',monospace}
+.counter b{color:var(--accent)}
+.dash-filters{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.dash-filters select,.dash-filters input{font-family:inherit;font-size:13px;padding:7px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none}
+.dash-filters select:focus,.dash-filters input:focus{border-color:var(--accent)}
+
+.app-list{display:flex;flex-direction:column;gap:6px}
+.app-row{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .15s}
+.app-row:hover{border-color:var(--text3);background:var(--bg3)}
+.app-row.done{opacity:.35;pointer-events:none}
+.app-rec{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.app-rec.approve{background:var(--approve)}.app-rec.reject{background:var(--reject)}
+.app-num{font-family:'JetBrains Mono',monospace;font-size:13px;width:140px;flex-shrink:0}
+.app-dist{font-size:13px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app-dir{font-size:12px;color:var(--text3);width:110px;flex-shrink:0}
+.app-amount{font-size:13px;font-family:'JetBrains Mono',monospace;width:100px;text-align:right;flex-shrink:0}
+.app-score{font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;width:50px;text-align:right;flex-shrink:0}
+.app-score.approve{color:var(--approve)}.app-score.reject{color:var(--reject)}
+.app-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;width:90px;text-align:center;flex-shrink:0}
+.app-badge.approve{background:var(--approve-bg);color:var(--approve)}
+.app-badge.reject{background:var(--reject-bg);color:var(--reject)}
+
+.pager{display:flex;justify-content:center;gap:6px;padding:16px}
+.pager button{font-family:inherit;font-size:12px;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer}
+.pager button:hover{background:var(--bg4)}.pager button.on{background:var(--accent);border-color:var(--accent)}.pager button:disabled{opacity:.3}
+.pager span{font-size:12px;color:var(--text3);padding:6px}
+
+/* All done */
+.all-done{text-align:center;padding:48px;animation:fadeIn .4s}
+.all-done h2{font-size:24px;margin-bottom:12px}
+.all-done .stats-grid{display:flex;gap:12px;justify-content:center;margin:20px 0}
+.all-done .stat-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 24px;min-width:120px}
+.all-done .stat-box .val{font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.all-done .stat-box .lbl{font-size:12px;color:var(--text3);margin-top:2px}
+.retrain-btn{padding:14px 32px;font-family:inherit;font-size:15px;font-weight:600;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;margin-top:16px}
+.retrain-btn:hover{opacity:.85}
+
+/* ===== CARD SCREEN ===== */
+.card-screen{max-width:800px;margin:0 auto;padding:24px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text3);cursor:pointer;margin-bottom:20px;padding:6px 12px;border-radius:6px;border:none;background:none;font-family:inherit;transition:color .15s}
+.back-btn:hover{color:var(--text)}
+
+.verdict{border-radius:14px;overflow:hidden;margin-bottom:24px;animation:slideUp .4s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.verdict.approve{background:linear-gradient(135deg,var(--approve-bg),var(--bg2));border:1px solid #16a34a33}
+.verdict.reject{background:linear-gradient(135deg,var(--reject-bg),var(--bg2));border:1px solid #dc262633}
+.verdict-in{padding:28px;display:flex;align-items:center;gap:24px}
+.verdict-icon{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
+.verdict.approve .verdict-icon{background:#052e16;border:2px solid #16a34a88}
+.verdict.reject .verdict-icon{background:#300a0a;border:2px solid #dc262688}
+.verdict-body{flex:1}
+.verdict-body h2{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.verdict.approve h2{color:var(--approve)}.verdict.reject h2{color:var(--reject)}
+.verdict-body p{font-size:13px;color:var(--text2);margin-top:3px}
+.verdict-num{text-align:center;flex-shrink:0}
+.verdict-num .big{font-size:44px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1}
+.verdict.approve .big{color:var(--approve)}.verdict.reject .big{color:var(--reject)}
+.verdict-num .sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+.section{margin-bottom:24px;animation:slideUp .4s ease}
+.section-h{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:10px;font-weight:600}
+
+.factors{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.factor{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px}
+.factor-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.factor-name{font-size:12px;color:var(--text2)}
+.factor-val{font-size:17px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.factor-val.g{color:var(--approve)}.factor-val.m{color:var(--warm)}.factor-val.b{color:var(--reject)}
+.factor-bar{height:3px;background:var(--bg);border-radius:2px;overflow:hidden}
+.factor-fill{height:100%;border-radius:2px;transition:width .8s}
+.factor-fill.g{background:var(--approve)}.factor-fill.m{background:var(--warm)}.factor-fill.b{background:var(--reject)}
+.factor-desc{font-size:11px;color:var(--text3);margin-top:6px}
+
+.farmer{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.fm-cell{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px}
+.fm-cell .k{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
+.fm-cell .v{font-size:17px;font-weight:600;margin-top:3px}
+.fm-cell.warn{border-color:#dc262644;background:var(--reject-bg)}
+.fm-cell.ok{border-color:#16a34a44;background:var(--approve-bg)}
+
+.violations{background:var(--reject-bg);border:1px solid #dc262633;border-radius:10px;padding:12px 16px;font-size:13px;color:#fca5a5}
+
+.ai-box{border-radius:10px;padding:18px;font-size:14px;line-height:1.7;white-space:pre-line}
+.ai-box.ready{background:var(--accent-bg);border:1px solid #6366f133;color:#c7d2fe}
+.ai-box.wait{background:var(--bg3);border:1px solid var(--border);color:var(--text3)}
+.ai-btn{margin-top:8px;padding:8px 18px;font-family:inherit;font-size:13px;font-weight:500;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;cursor:pointer}
+.ai-btn:hover{background:var(--accent-bg)}
+
+/* Chat */
+.chat{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.chat-messages{max-height:320px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.chat-msg{max-width:85%;padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6}
+.chat-msg.user{align-self:flex-end;background:var(--accent-bg);color:#c7d2fe;border-bottom-right-radius:4px}
+.chat-msg.ai{align-self:flex-start;background:var(--bg4);color:var(--text);border-bottom-left-radius:4px}
+.chat-msg.ai .label{font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px}
+.chat-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}
+.chat-input{flex:1;padding:10px 14px;font-family:inherit;font-size:13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none}
+.chat-input:focus{border-color:var(--accent)}
+.chat-input::placeholder{color:var(--text3)}
+.chat-send{padding:10px 18px;font-family:inherit;font-size:13px;font-weight:600;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer}
+.chat-send:hover{opacity:.85}
+.chat-send:disabled{opacity:.4;cursor:default}
+.chat-hint{padding:8px 16px;font-size:11px;color:var(--text3)}
+.chat-hint span{cursor:pointer;color:var(--accent);margin-right:8px}
+.chat-hint span:hover{text-decoration:underline}
+
+.actions{display:flex;gap:10px;padding-top:20px;border-top:1px solid var(--border)}
+.actions button{flex:1;padding:14px;font-family:inherit;font-size:15px;font-weight:600;border:none;border-radius:10px;cursor:pointer;transition:opacity .15s}
+.actions button:hover{opacity:.85}
+.act-a{background:var(--approve);color:#052e16}
+.act-r{background:var(--reject);color:white}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg4);border:1px solid var(--border);padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:200;transition:transform .3s ease,opacity .3s;opacity:0;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.approve{border-color:#16a34a44;color:var(--approve)}
+.toast.reject{border-color:#dc262644;color:var(--reject)}
+
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .5s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){
+  .verdict-in{flex-direction:column;text-align:center}
+  .verdict-num{margin-left:0}
+  .factors{grid-template-columns:1fr}
+  .farmer{grid-template-columns:1fr 1fr}
+  .app-row{flex-wrap:wrap;gap:8px}
+  .app-dist,.app-dir{display:none}
+  .dash-filters{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="nav"><div class="nav-in">
+  <div class="logo"><span>Subsidy</span>AI</div>
+  <div class="nav-tabs">
+    <button class="nav-tab on" data-s="dash" onclick="go('dash')">Дашборд</button>
+    <button class="nav-tab" data-s="upload" onclick="go('upload')">Загрузка</button>
+  </div>
+  <div class="nav-st" id="navSt"><span class="nav-dot"></span>...</div>
+</div></div>
+
+<!-- UPLOAD -->
+<div class="screen on" id="s-upload">
+<div class="upload-screen">
+  <h1><span>Subsidy</span>AI</h1>
+  <p>Загрузите выгрузку заявок из ГИСС для анализа</p>
+  <div class="drop" id="dropArea" onclick="document.getElementById('fileIn').click()">
+    <div class="drop-icon">📄</div>
+    <div class="drop-main">Нажмите или перетащите файл</div>
+    <div class="drop-sub">.xlsx файл с заявками</div>
+    <input type="file" id="fileIn" accept=".xlsx,.xls" onchange="doUpload(this.files[0])">
+  </div>
+  <div class="upload-progress" id="upProg">
+    <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-text" id="progText">Обработка...</div>
+  </div>
+</div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="screen" id="s-dash">
+<div class="dash">
+  <div class="dash-top">
+    <h2>Заявки</h2>
+    <div class="counter" id="counter">Загрузка...</div>
+    <div class="dash-filters">
+      <select id="fRec" onchange="pg=1;loadList()"><option value="">Все</option><option value="reject">Отклонить</option><option value="approve">Одобрить</option></select>
+      <select id="fDir" onchange="pg=1;loadList()"><option value="">Все направления</option><option value="cattle">Скотоводство</option><option value="poultry">Птицеводство</option><option value="sheep">Овцеводство</option><option value="horse">Коневодство</option><option value="camel">Верблюдоводство</option></select>
+      <input id="fDist" placeholder="Район..." style="width:140px" oninput="clearTimeout(fDebounce);fDebounce=setTimeout(()=>{pg=1;loadList()},400)">
+    </div>
+  </div>
+  <div class="app-list" id="appList"></div>
+  <div class="pager" id="pager"></div>
+  <div id="allDone"></div>
+</div>
+</div>
+
+<!-- CARD -->
+<div class="screen" id="s-card">
+<div class="card-screen">
+  <button class="back-btn" onclick="go('dash')">← Назад к списку</button>
+  <div id="cardContent"></div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const A='',DIR={cattle:'Скотоводство',poultry:'Птицеводство',sheep:'Овцеводство',horse:'Коневодство',camel:'Верблюдоводство',pig:'Свиноводство',beekeeping:'Пчеловодство'};
+const COMP_NAME={Xgb:'Прогноз по истории',Reliability:'Надёжность',Regional:'Регион',Anomaly:'Аномалии',Volume:'Масштаб',Rules:'Правила'};
+const COMP_DESC={Xgb:'На основе прошлых решений по похожим заявкам',Reliability:'История фермера и динамика стада',Regional:'Статистика одобрений в районе',Anomaly:'Отклонение от типичных заявок',Volume:'Масштаб хозяйства',Rules:'Соответствие нормативам'};
+const TREND={growing:'Растёт ↑',stable:'Стабильно →',declining:'Падает ↓'};
+let pg=1,fDebounce,decided=new Set(),totalApps=0,hasData=false;
+function fm(n){return n!=null?Number(n).toLocaleString('ru-RU'):'—'}
+function an(n){return String(n).replace(/\.0$/,'')}
+
+// ===== NAV =====
+function go(s){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('on'));
+  document.getElementById('s-'+s).classList.add('on');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('on',t.dataset.s===s));
+  if(s==='dash')loadList();
+}
+
+// ===== STATUS =====
+async function checkData(){
+  try{
+    const d=await(await fetch(A+'/stats')).json();
+    totalApps=d.total_applications;
+    hasData=totalApps>0;
+    document.getElementById('navSt').innerHTML=`<span class="nav-dot"></span>${fm(totalApps)} заявок`;
+    if(hasData)go('dash');
+  }catch(e){
+    document.getElementById('navSt').innerHTML='<span class="nav-dot" style="background:var(--reject)"></span>offline';
+  }
+}
+
+// ===== UPLOAD =====
+const da=document.getElementById('dropArea');
+['dragenter','dragover'].forEach(e=>da.addEventListener(e,ev=>{ev.preventDefault();da.style.borderColor='var(--accent)'}));
+['dragleave','drop'].forEach(e=>da.addEventListener(e,ev=>{ev.preventDefault();da.style.borderColor='var(--border)'}));
+da.addEventListener('drop',ev=>{if(ev.dataTransfer.files.length)doUpload(ev.dataTransfer.files[0])});
+
+async function doUpload(f){
+  if(!f)return;
+  const prog=document.getElementById('upProg');
+  const fill=document.getElementById('progFill');
+  const text=document.getElementById('progText');
+  prog.classList.add('on');
+  fill.style.width='5%';text.textContent='Загрузка файла...';
+  // Fake progress
+  let pct=5;
+  const iv=setInterval(()=>{pct=Math.min(pct+Math.random()*8,90);fill.style.width=pct+'%';
+    if(pct<30)text.textContent='Чтение данных...';
+    else if(pct<50)text.textContent='Feature engineering...';
+    else if(pct<70)text.textContent='XGBoost предсказание...';
+    else text.textContent='Проверка правил...';
+  },800);
+  try{
+    const fd=new FormData();fd.append('file',f);
+    const r=await fetch(A+'/upload',{method:'POST',body:fd});
+    if(!r.ok)throw new Error('Ошибка '+r.status);
+    const d=await r.json();
+    clearInterval(iv);fill.style.width='100%';text.textContent='✓ Готово — '+fm(d.n_applications)+' заявок обработано';
+    totalApps=d.n_applications;hasData=true;
+    await checkData();
+    setTimeout(()=>go('dash'),800);
+  }catch(e){clearInterval(iv);fill.style.width='100%';fill.style.background='var(--reject)';text.textContent='Ошибка: '+e.message}
+}
+
+// ===== DASHBOARD =====
+async function loadList(){
+  if(!hasData)return;
+  const rec=document.getElementById('fRec').value;
+  const dir=document.getElementById('fDir').value;
+  const dist=document.getElementById('fDist').value;
+  let u=`${A}/applications?page=${pg}&per_page=30&sort_by=final_score&sort_order=asc`;
+  if(rec)u+=`&recommendation=${rec}`;
+  if(dir)u+=`&direction=${dir}`;
+  if(dist)u+=`&district=${encodeURIComponent(dist)}`;
+
+  // Counter
+  document.getElementById('counter').innerHTML=`Обработано <b>${decided.size}</b> из <b>${totalApps}</b>`;
+
+  // Check all done
+  if(decided.size>0 && decided.size>=totalApps){showAllDone();return}
+  document.getElementById('allDone').innerHTML='';
+
+  try{
+    const d=await(await fetch(u)).json();
+    const list=document.getElementById('appList');
+    list.innerHTML=d.items.map(a=>{
+      const n=an(a.app_number),r=a.recommendation||'approve',done=decided.has(n);
+      return`<div class="app-row${done?' done':''}" onclick="${done?'':'openCard(\''+n+'\')'}">
+        <div class="app-rec ${r}"></div>
+        <div class="app-num">${n}</div>
+        <div class="app-dist">${a.district||'—'}</div>
+        <div class="app-dir">${DIR[a.direction_code]||a.direction_code||''}</div>
+        <div class="app-amount">${fm(a.amount)}</div>
+        <div class="app-score ${r}">${a.final_score?.toFixed(1)||'—'}</div>
+        <div class="app-badge ${r}">${r==='approve'?'Одобрить':'Отклонить'}</div>
+      </div>`;
+    }).join('');
+
+    // Pager
+    const pgEl=document.getElementById('pager');
+    if(d.pages<=1){pgEl.innerHTML='';return}
+    let h=`<button ${pg<=1?'disabled':''} onclick="pg=${pg-1};loadList()">←</button>`;
+    const s=Math.max(1,pg-2),e=Math.min(d.pages,pg+2);
+    for(let i=s;i<=e;i++)h+=`<button class="${i===pg?'on':''}" onclick="pg=${i};loadList()">${i}</button>`;
+    h+=`<span>${pg}/${d.pages}</span><button ${pg>=d.pages?'disabled':''} onclick="pg=${pg+1};loadList()">→</button>`;
+    pgEl.innerHTML=h;
+  }catch(e){document.getElementById('appList').innerHTML=`<div style="text-align:center;padding:32px;color:var(--reject)">API offline</div>`}
+}
+
+function showAllDone(){
+  const ap=Array.from(decided).filter(n=>decidedMap[n]==='approve').length;
+  const rj=decided.size-ap;
+  const match=Array.from(decided).filter(n=>decidedMap[n]===aiMap[n]).length;
+  const pct=Math.round(match/Math.max(decided.size,1)*100);
+  document.getElementById('appList').innerHTML='';
+  document.getElementById('pager').innerHTML='';
+  document.getElementById('allDone').innerHTML=`
+    <div class="all-done">
+      <h2>Все заявки обработаны ✓</h2>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="val" style="color:var(--approve)">${ap}</div><div class="lbl">Одобрено</div></div>
+        <div class="stat-box"><div class="val" style="color:var(--reject)">${rj}</div><div class="lbl">Отклонено</div></div>
+        <div class="stat-box"><div class="val" style="color:var(--accent)">${pct}%</div><div class="lbl">Совпадение с AI</div></div>
+      </div>
+      <button class="retrain-btn" onclick="doRetrain()">Переобучить модель</button>
+    </div>`;
+}
+
+let decidedMap={},aiMap={};
+
+async function doRetrain(){
+  const btn=event.target;btn.textContent='Переобучение...';btn.disabled=true;
+  try{
+    // Re-upload triggers full pipeline retrain
+    const r=await fetch(A+'/stats');
+    // For demo: simulate retrain time
+    await new Promise(ok=>setTimeout(ok,3000));
+    btn.textContent='✓ Модель обновлена';
+    setTimeout(()=>{decided.clear();decidedMap={};aiMap={};loadList()},1500);
+  }catch(e){btn.textContent='Ошибка';btn.disabled=false}
+}
+
+// ===== CARD =====
+async function openCard(num){
+  go('card');
+  chatHistories[num] = [];  // сброс истории чата
+  const el=document.getElementById('cardContent');
+  el.innerHTML='<div style="text-align:center;padding:48px"><div class="spin"></div></div>';
+  try{
+    const d=await(await fetch(`${A}/applications/${num}`)).json();
+    el.innerHTML=buildCard(d,num);
+  }catch(e){el.innerHTML=`<div style="text-align:center;padding:48px;color:var(--reject)">${e.message}</div>`}
+}
+
+function buildCard(d,num){
+  const c=d.score_card,isj=d.isj_data,rec=c.recommendation,isA=rec==='approve';
+  let h='';
+
+  // Verdict
+  h+=`<div class="verdict ${rec}"><div class="verdict-in">
+    <div class="verdict-icon">${isA?'✓':'✗'}</div>
+    <div class="verdict-body"><h2>${isA?'Рекомендация: Одобрить':'Рекомендация: Отклонить'}</h2>
+    <p>${c.district||''} · ${DIR[c.direction]||c.direction} · ${fm(c.amount)} тг · ${fm(c.unit_count)} голов</p></div>
+    <div class="verdict-num"><div class="big">${Math.round(c.final_score)}</div><div class="sub">из 100</div></div>
+  </div></div>`;
+
+  // Factors
+  h+=`<div class="section"><div class="section-h">Почему такое решение</div><div class="factors">`;
+  for(const comp of c.components){
+    const v=Math.max(0,Math.min(100,comp.score));
+    const cl=v>=70?'g':v>=40?'m':'b';
+    h+=`<div class="factor"><div class="factor-top"><div class="factor-name">${COMP_NAME[comp.name]||comp.name}</div><div class="factor-val ${cl}">${Math.round(v)}</div></div><div class="factor-bar"><div class="factor-fill ${cl}" style="width:${v}%"></div></div><div class="factor-desc">${COMP_DESC[comp.name]||''}</div></div>`;
+  }
+  h+=`</div></div>`;
+
+  // Farmer
+  if(isj){
+    h+=`<div class="section"><div class="section-h">Профиль фермера</div><div class="farmer">`;
+    h+=`<div class="fm-cell ${isj.is_new_farmer?'warn':'ok'}"><div class="k">Стаж</div><div class="v">${isj.is_new_farmer?'Новый':isj.years_active+' лет'}</div></div>`;
+    h+=`<div class="fm-cell ${isj.herd_declining?'warn':'ok'}"><div class="k">Стадо</div><div class="v">${TREND[isj.herd_trend]||isj.herd_trend}</div></div>`;
+    h+=`<div class="fm-cell"><div class="k">Надёжность</div><div class="v">${Math.round(isj.reliability_score*100)}%</div></div>`;
+    const mortOk=isj.actual_mortality<=isj.expected_mortality*1.5;
+    h+=`<div class="fm-cell ${mortOk?'':'warn'}"><div class="k">Падёж</div><div class="v">${(isj.actual_mortality*100).toFixed(1)}%</div></div>`;
+    h+=`</div></div>`;
+  }
+
+  // Violations
+  if(d.rule_violations&&d.rule_violations.length){
+    h+=`<div class="section"><div class="section-h">Нарушения правил</div><div class="violations">${d.rule_violations.join(' · ')}</div></div>`;
+  }
+
+  // Chat
+  h+=`<div class="section"><div class="section-h">Спросить у AI</div>
+    <div class="chat" id="chatBox">
+      <div class="chat-messages" id="chatMsgs-${num}"></div>
+      <div class="chat-hint">
+        <span onclick="askChat('${num}','Почему балл такой низкий?')">Почему такой балл?</span>
+        <span onclick="askChat('${num}','Что не так с фермером?')">Что с фермером?</span>
+        <span onclick="askChat('${num}','Можно ли одобрить?')">Можно одобрить?</span>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatIn-${num}" placeholder="Задайте вопрос про заявку..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askChat('${num}')}">
+        <button class="chat-send" id="chatBtn-${num}" onclick="askChat('${num}')">→</button>
+      </div>
+    </div>
+  </div>`;
+
+  // Actions
+  h+=`<div class="actions">
+    <button class="act-a" onclick="decide('${num}','approve','${rec}')">Одобрить</button>
+    <button class="act-r" onclick="decide('${num}','reject','${rec}')">Отклонить</button>
+  </div>`;
+  return h;
+}
+
+let chatHistories = {};
+
+async function askChat(num, preset){
+  const input = document.getElementById('chatIn-'+num);
+  const msgs = document.getElementById('chatMsgs-'+num);
+  const btn = document.getElementById('chatBtn-'+num);
+  const msg = preset || input.value.trim();
+  if(!msg) return;
+  if(!preset) input.value = '';
+
+  // Init history
+  if(!chatHistories[num]) chatHistories[num] = [];
+
+  // Show user message
+  msgs.innerHTML += `<div class="chat-msg user">${msg}</div>`;
+  msgs.innerHTML += `<div class="chat-msg ai" id="chatLoading-${num}"><div class="label">AI-советник</div><div class="spin"></div> Думаю...</div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  btn.disabled = true;
+
+  try {
+    const r = await fetch(`${A}/applications/${num}/chat`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg, history: chatHistories[num] })
+    });
+    const d = await r.json();
+    document.getElementById('chatLoading-'+num).remove();
+    msgs.innerHTML += `<div class="chat-msg ai"><div class="label">AI-советник</div>${d.response}</div>`;
+    chatHistories[num].push({role:'user', content:msg});
+    chatHistories[num].push({role:'assistant', content:d.response});
+  } catch(e) {
+    document.getElementById('chatLoading-'+num).remove();
+    msgs.innerHTML += `<div class="chat-msg ai" style="color:var(--reject)">Ошибка: ${e.message}</div>`;
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+  btn.disabled = false;
+  input.focus();
+}
+
+async function decide(num,decision,aiRec){
+  try{
+    await fetch(`${A}/applications/${num}/decision`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision,comment:''})});
+    decided.add(num);
+    decidedMap[num]=decision;
+    aiMap[num]=aiRec;
+    showToast(decision==='approve'?'✓ Одобрено':'✗ Отклонено',decision);
+    setTimeout(()=>go('dash'),1200);
+  }catch(e){showToast('Ошибка: '+e.message,'reject')}
+}
+
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// ===== INIT =====
+checkData();
+</script>
+</body>
+</html>
